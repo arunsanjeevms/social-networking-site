@@ -1,0 +1,420 @@
+<!-- 
+═══════════════════════════════════════════════════════════════
+    SOCIAL NETWORK PROJECT - FILE INDEX
+═══════════════════════════════════════════════════════════════
+
+📁 PROJECT STRUCTURE OVERVIEW
+
+ROOT DIRECTORY (c:\xampp\htdocs\social\)
+│
+├── 📄 index.php                     → Login page
+├── 📄 signup.php                    → User registration page
+├── 📄 home.php                      → Main feed (view all posts)
+├── 📄 profile.php                   → User profile page
+├── 📄 create_post.php               → Create new post
+├── 📄 logout.php                    → Logout handler
+├── 📄 check_setup.php               → Setup verification tool
+├── 📄 generate_avatar.html          → Default avatar generator
+├── 📄 social_network.sql            → Database schema
+├── 📄 README.md                     → Full documentation
+├── 📄 SETUP_GUIDE.md                → Quick setup instructions
+│
+├── 📁 config/
+│   └── 📄 database.php              → Database connection & helpers
+│
+├── 📁 includes/
+│   ├── 📄 header.php                → Navigation bar & HTML head
+│   └── 📄 footer.php                → Footer & closing tags
+│
+├── 📁 assets/
+│   ├── 📁 css/
+│   │   └── 📄 style.css             → All styles (light/dark theme)
+│   │
+│   ├── 📁 js/
+│   │   └── 📄 main.js               → JavaScript (AJAX, theme, etc.)
+│   │
+│   └── 📁 uploads/
+│       ├── 📁 profiles/             → User profile pictures
+│       │   └── default-avatar.png   → Default profile image
+│       └── 📁 posts/                → Post images
+│
+└── 📁 ajax/
+    ├── 📄 like_post.php             → Handle like/unlike (AJAX)
+    └── 📄 add_comment.php           → Handle comments (AJAX)
+
+═══════════════════════════════════════════════════════════════
+    QUICK START CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+1. ☑ Start Apache + MySQL in XAMPP Control Panel
+2. ☑ Create database 'social_network' in phpMyAdmin
+3. ☑ Import social_network.sql file
+4. ☑ Generate default avatar (open generate_avatar.html)
+5. ☑ Run setup check: http://localhost/social/check_setup.php
+6. ☑ Access website: http://localhost/social
+
+═══════════════════════════════════════════════════════════════
+    PAGE DESCRIPTIONS
+═══════════════════════════════════════════════════════════════
+
+🔐 AUTHENTICATION PAGES
+  • index.php        → Login with email and password
+  • signup.php       → Register new account
+  • logout.php       → End session and logout
+
+🏠 MAIN PAGES
+  • home.php         → News feed with all posts
+                       - View posts from all users
+                       - Like and comment on posts
+                       - Real-time updates with AJAX
+  
+  • profile.php      → User profile management
+                       - View profile information
+                       - Upload profile picture
+                       - Edit bio
+                       - View own posts
+  
+  • create_post.php  → Create new posts
+                       - Write text content
+                       - Upload images (optional)
+                       - Preview before posting
+
+⚙️ UTILITY FILES
+  • check_setup.php       → Verify installation
+  • generate_avatar.html  → Create default avatar image
+
+📊 DATABASE TABLES
+  • users     → User accounts (id, username, email, password, profile_image, bio)
+  • posts     → User posts (id, user_id, content, image, created_at)
+  • likes     → Post likes (id, user_id, post_id, created_at)
+  • comments  → Post comments (id, user_id, post_id, comment, created_at)
+
+═══════════════════════════════════════════════════════════════
+    KEY FEATURES
+═══════════════════════════════════════════════════════════════
+
+✨ User Authentication
+  - Secure login/signup with password hashing
+  - Session management
+  - Protected pages
+
+📝 Posts
+  - Create posts with text and images
+  - View all posts in chronological order
+  - Image upload and display
+
+💬 Social Interactions
+  - Like/unlike posts (AJAX - no page reload)
+  - Comment on posts (AJAX - real-time)
+  - View like and comment counts
+
+👤 User Profiles
+  - Profile picture upload
+  - Bio/description editing
+  - View user's posts
+
+🎨 UI/UX
+  - Modern, clean design
+  - Dark/Light theme toggle (persists in localStorage)
+  - Fully responsive (mobile, tablet, desktop)
+  - Smooth animations and transitions
+  - Font Awesome icons
+
+🔒 Security
+  - SQL injection prevention (prepared statements)
+  - XSS protection (htmlspecialchars)
+  - Password hashing (bcrypt)
+  - Session security
+  - File upload validation
+
+═══════════════════════════════════════════════════════════════
+    TECHNOLOGY STACK
+═══════════════════════════════════════════════════════════════
+
+Frontend:
+  • HTML5
+  • CSS3 (with CSS variables for theming)
+  • JavaScript ES6+ (Fetch API for AJAX)
+  • Font Awesome 6.4.0 (icons)
+
+Backend:
+  • PHP 7.4+
+  • MySQL 5.7+
+  • mysqli (prepared statements)
+
+Server:
+  • Apache (via XAMPP)
+
+═══════════════════════════════════════════════════════════════
+    TESTING CREDENTIALS
+═══════════════════════════════════════════════════════════════
+
+Demo Account (pre-created):
+  Email:    demo@example.com
+  Password: password123
+
+Or create your own account via signup.php
+
+═══════════════════════════════════════════════════════════════
+    IMPORTANT URLS
+═══════════════════════════════════════════════════════════════
+
+🌐 Website:        http://localhost/social
+🔧 Setup Check:    http://localhost/social/check_setup.php
+👤 Avatar Gen:     http://localhost/social/generate_avatar.html
+📊 phpMyAdmin:     http://localhost/phpmyadmin
+🏠 XAMPP:          http://localhost
+
+═══════════════════════════════════════════════════════════════
+    TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+Problem: Can't connect to database
+  → Check MySQL is running in XAMPP
+  → Verify database 'social_network' exists
+  → Check credentials in config/database.php
+
+Problem: Page shows blank/white screen
+  → Check Apache is running
+  → Enable error display in php.ini
+  → Check file paths are correct
+
+Problem: Images not uploading
+  → Ensure upload folders exist
+  → Check folder permissions (not read-only)
+  → Verify file size limits in php.ini
+
+Problem: AJAX features not working
+  → Check browser console (F12) for errors
+  → Ensure JavaScript is enabled
+  → Clear browser cache
+
+═══════════════════════════════════════════════════════════════
+    NEXT STEPS / ENHANCEMENTS
+═══════════════════════════════════════════════════════════════
+
+Potential features to add:
+  • Edit/delete own posts
+  • User search functionality
+  • Follow/unfollow system
+  • Private messaging
+  • Notifications
+  • Email verification
+  • Password reset
+  • Post sharing
+  • Hashtags
+  • User mentions
+  • Image filters/editing
+  • Video uploads
+  • Stories feature
+
+═══════════════════════════════════════════════════════════════
+    DOCUMENTATION
+═══════════════════════════════════════════════════════════════
+
+📖 Full Documentation:      README.md
+🚀 Quick Setup Guide:        SETUP_GUIDE.md
+🔍 This File Index:          PROJECT_INDEX.html
+
+═══════════════════════════════════════════════════════════════
+    CREDITS
+═══════════════════════════════════════════════════════════════
+
+Created as an educational project to demonstrate:
+  ✓ Full-stack web development
+  ✓ PHP & MySQL integration
+  ✓ AJAX implementation
+  ✓ Security best practices
+  ✓ Responsive design
+  ✓ Modern UI/UX patterns
+
+═══════════════════════════════════════════════════════════════
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Index - Social Network</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #252526;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #569cd6;
+            margin: 30px 0 15px 0;
+        }
+        .file-tree {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 3px solid #4ec9b0;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #0e639c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #1177bb;
+        }
+        .section {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 3px solid #569cd6;
+        }
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .highlight {
+            color: #ce9178;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .warning { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-folder-open"></i> Social Network - Project Index</h1>
+        
+        <div class="btn-group">
+            <a href="http://localhost/social" class="btn">
+                <i class="fas fa-home"></i> Open Website
+            </a>
+            <a href="check_setup.php" class="btn">
+                <i class="fas fa-cog"></i> Check Setup
+            </a>
+            <a href="generate_avatar.html" class="btn">
+                <i class="fas fa-user-circle"></i> Generate Avatar
+            </a>
+            <a href="README.md" class="btn">
+                <i class="fas fa-book"></i> Documentation
+            </a>
+        </div>
+
+        <h2>📁 Project Structure</h2>
+        <div class="file-tree">
+<pre>c:\xampp\htdocs\social\
+│
+├── <span class="success">index.php</span>                 → Login page
+├── <span class="success">signup.php</span>                → User registration
+├── <span class="success">home.php</span>                  → Main feed
+├── <span class="success">profile.php</span>               → User profile
+├── <span class="success">create_post.php</span>           → Create posts
+├── <span class="success">logout.php</span>                → Logout handler
+├── <span class="warning">check_setup.php</span>           → Setup verification
+├── <span class="warning">generate_avatar.html</span>      → Avatar generator
+├── <span class="highlight">social_network.sql</span>      → Database schema
+│
+├── 📁 config/
+│   └── <span class="success">database.php</span>          → DB connection
+│
+├── 📁 includes/
+│   ├── <span class="success">header.php</span>            → Navigation
+│   └── <span class="success">footer.php</span>            → Footer
+│
+├── 📁 assets/
+│   ├── 📁 css/
+│   │   └── <span class="success">style.css</span>         → All styles
+│   ├── 📁 js/
+│   │   └── <span class="success">main.js</span>           → JavaScript
+│   └── 📁 uploads/
+│       ├── 📁 profiles/       → Profile images
+│       └── 📁 posts/          → Post images
+│
+└── 📁 ajax/
+    ├── <span class="success">like_post.php</span>         → Like handler
+    └── <span class="success">add_comment.php</span>       → Comment handler</pre>
+        </div>
+
+        <h2>🚀 Quick Start</h2>
+        <div class="section">
+            <ol>
+                <li>Start <strong>Apache</strong> and <strong>MySQL</strong> in XAMPP</li>
+                <li>Create database: <code class="highlight">social_network</code></li>
+                <li>Import: <code class="highlight">social_network.sql</code></li>
+                <li>Generate default avatar</li>
+                <li>Visit: <code class="success">http://localhost/social</code></li>
+            </ol>
+        </div>
+
+        <h2>✨ Key Features</h2>
+        <div class="section">
+            <ul>
+                <li><span class="success">✓</span> User authentication with password hashing</li>
+                <li><span class="success">✓</span> Post creation with image uploads</li>
+                <li><span class="success">✓</span> AJAX likes (no page reload)</li>
+                <li><span class="success">✓</span> AJAX comments (real-time)</li>
+                <li><span class="success">✓</span> Profile management</li>
+                <li><span class="success">✓</span> Dark/Light theme toggle</li>
+                <li><span class="success">✓</span> Fully responsive design</li>
+                <li><span class="success">✓</span> SQL injection prevention</li>
+                <li><span class="success">✓</span> XSS protection</li>
+            </ul>
+        </div>
+
+        <h2>🔐 Test Credentials</h2>
+        <div class="section">
+            <p><strong>Demo Account:</strong></p>
+            <ul>
+                <li>Email: <code class="highlight">demo@example.com</code></li>
+                <li>Password: <code class="highlight">password123</code></li>
+            </ul>
+        </div>
+
+        <h2>🛠️ Technology Stack</h2>
+        <div class="section">
+            <p><strong>Frontend:</strong> HTML5, CSS3, JavaScript ES6+, Font Awesome</p>
+            <p><strong>Backend:</strong> PHP 7.4+, MySQL 5.7+</p>
+            <p><strong>Server:</strong> Apache (XAMPP)</p>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #3e3e42; text-align: center; color: #858585;">
+            <p>📚 For detailed documentation, see README.md</p>
+            <p>🚀 For setup instructions, see SETUP_GUIDE.md</p>
+        </div>
+    </div>
+</body>
+</html>
