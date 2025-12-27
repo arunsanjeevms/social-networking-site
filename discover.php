@@ -12,8 +12,8 @@ $page_title = 'Discover People';
 $user_id = $_SESSION['user_id'];
 
 // Get random users to suggest (excluding current user and already followed)
-$query = "SELECT u.id, u.username, u.email, u.profile_image, u.bio,
-          (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count,
+$query = "SELECT u.id, u.username, u.email, u.profile_image, u.bio, u.is_verified,
+          (SELECT COUNT(*) FROM posts WHERE user_id = u.id AND is_deleted = 0) as post_count,
           (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as follower_count
           FROM users u
           WHERE u.id != ? 
@@ -42,7 +42,12 @@ include 'includes/header.php';
                          alt="<?php echo htmlspecialchars($user['username']); ?>"
                          class="suggestion-avatar"
                          onerror="this.src='assets/uploads/profiles/default-avatar.png'">
-                    <div class="suggestion-name"><?php echo htmlspecialchars($user['username']); ?></div>
+                    <div class="suggestion-name">
+                        <?php echo htmlspecialchars($user['username']); ?>
+                        <?php if ($user['is_verified']): ?>
+                            <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                        <?php endif; ?>
+                    </div>
                     <div class="suggestion-username">@<?php echo htmlspecialchars($user['username']); ?></div>
                     
                     <?php if (!empty($user['bio'])): ?>

@@ -23,13 +23,14 @@ $page_title = 'Home Feed';
 // Get current user ID
 $user_id = $_SESSION['user_id'];
 
-// Fetch all posts with user information, ordered by newest first
-$query = "SELECT p.*, u.username, u.profile_image,
+// Fetch all posts with user information, ordered by newest first (exclude deleted posts)
+$query = "SELECT p.*, u.username, u.profile_image, u.is_verified,
           (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
           (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = ?) as user_liked,
           (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
           FROM posts p
           JOIN users u ON p.user_id = u.id
+          WHERE p.is_deleted = 0
           ORDER BY p.created_at DESC";
 
 $stmt = $conn->prepare($query);
@@ -115,7 +116,12 @@ include 'includes/header.php';
                          class="post-avatar"
                          onerror="this.src='assets/uploads/profiles/default-avatar.png'">
                     <div class="post-user-info">
-                        <h4><?php echo htmlspecialchars($post['username']); ?></h4>
+                        <h4>
+                            <?php echo htmlspecialchars($post['username']); ?>
+                            <?php if ($post['is_verified']): ?>
+                                <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                            <?php endif; ?>
+                        </h4>
                         <span class="username">@<?php echo htmlspecialchars($post['username']); ?></span>
                     </div>
                     <span class="post-time">
@@ -159,11 +165,21 @@ include 'includes/header.php';
                     <?php echo nl2br(htmlspecialchars($post['content'])); ?>
                 </div>
                 
-                <!-- Post Image (if exists) -->
-                <?php if (!empty($post['image'])): ?>
+                <!-- Post Media (Image or Video) -->
+                <?php if (!empty($post['image']) && $post['media_type'] == 'image'): ?>
                     <div class="post-image" onclick="openLightbox('assets/uploads/posts/<?php echo htmlspecialchars($post['image']); ?>')" style="cursor: pointer;">
                         <img src="assets/uploads/posts/<?php echo htmlspecialchars($post['image']); ?>" 
                              alt="Post image">
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (!empty($post['video']) && $post['media_type'] == 'video'): ?>
+                    <div class="post-video">
+                        <video controls preload="metadata" style="max-width: 100%; border-radius: 8px; background: #000;">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/mp4">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/webm">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                 <?php endif; ?>
                 

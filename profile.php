@@ -1,14 +1,16 @@
 <?php
 /**
- * Profile Page
+ * Profile Page - Modern Dark Theme
  * 
  * This page displays user profile information and allows
  * profile image and bio updates.
+ * 
  * Features:
  * - Display user information
  * - Profile image upload with preview
  * - Bio editing
  * - View user's posts
+ * - NFC Support: Can load any profile via ?id= parameter
  */
 
 // Start session and check authentication
@@ -16,11 +18,25 @@ session_start();
 require_once 'config/database.php';
 require_login();
 
-// Set page title
-$page_title = 'Profile';
+// Get current user ID from session
+$current_user_id = $_SESSION['user_id'];
 
-// Get current user ID
-$user_id = $_SESSION['user_id'];
+// Check if viewing another user's profile via ?id= parameter (NFC support)
+if (isset($_GET['id']) && !empty($_GET['id'])) {
+    $requested_id = filter_var($_GET['id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    
+    if ($requested_id !== false && $requested_id != $current_user_id) {
+        // Redirect to user_profile.php for viewing other users
+        header("Location: user_profile.php?id=" . $requested_id);
+        exit();
+    }
+}
+
+// Set page title
+$page_title = 'My Profile';
+
+// Use current user's ID for own profile
+$user_id = $current_user_id;
 
 // Initialize variables
 $success = '';
@@ -28,7 +44,7 @@ $error = '';
 
 // Handle profile image upload
 if (isset($_POST['update_profile'])) {
-    $bio = sanitize_input($_POST['bio']);
+    $bio = sanitize_input($_POST['bio'] ?? '');
     
     // Update bio
     $stmt = $conn->prepare("UPDATE users SET bio = ? WHERE id = ?");
@@ -84,11 +100,12 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 // Fetch user's posts
-$stmt = $conn->prepare("SELECT p.*, 
+$stmt = $conn->prepare("SELECT p.*, u.username, u.profile_image, u.is_verified,
                         (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
                         (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
                         FROM posts p 
-                        WHERE p.user_id = ? 
+                        JOIN users u ON p.user_id = u.id
+                        WHERE p.user_id = ? AND p.is_deleted = 0 
                         ORDER BY p.created_at DESC");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -145,7 +162,12 @@ include 'includes/header.php';
         </div>
         
         <div class="profile-info">
-            <h1><?php echo htmlspecialchars($user['username']); ?></h1>
+            <h1>
+                <?php echo htmlspecialchars($user['username']); ?>
+                <?php if ($user['is_verified']): ?>
+                    <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                <?php endif; ?>
+            </h1>
             <p class="username">@<?php echo htmlspecialchars($user['username']); ?></p>
             <p class="bio">
                 <?php echo !empty($user['bio']) ? nl2br(htmlspecialchars($user['bio'])) : 'No bio yet. Tell us about yourself!'; ?>
@@ -209,7 +231,12 @@ include 'includes/header.php';
                          class="post-avatar"
                          onerror="this.src='assets/uploads/profiles/default-avatar.png'">
                     <div class="post-user-info">
-                        <h4><?php echo htmlspecialchars($user['username']); ?></h4>
+                        <h4>
+                            <?php echo htmlspecialchars($post['username']); ?>
+                            <?php if ($post['is_verified']): ?>
+                                <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                            <?php endif; ?>
+                        </h4>
                         <span class="username">@<?php echo htmlspecialchars($user['username']); ?></span>
                     </div>
                     <span class="post-time">
@@ -222,11 +249,21 @@ include 'includes/header.php';
                     <?php echo nl2br(htmlspecialchars($post['content'])); ?>
                 </div>
                 
-                <!-- Post Image -->
-                <?php if (!empty($post['image'])): ?>
+                <!-- Post Media (Image or Video) -->
+                <?php if (!empty($post['image']) && $post['media_type'] == 'image'): ?>
                     <div class="post-image">
                         <img src="assets/uploads/posts/<?php echo htmlspecialchars($post['image']); ?>" 
                              alt="Post image">
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (!empty($post['video']) && $post['media_type'] == 'video'): ?>
+                    <div class="post-video">
+                        <video controls preload="metadata" style="max-width: 100%; border-radius: 8px; background: #000;">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/mp4">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/webm">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                 <?php endif; ?>
                 

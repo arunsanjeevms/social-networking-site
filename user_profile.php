@@ -1,15 +1,20 @@
 <?php
 /**
- * User Profile View Page
+ * User Profile View Page - Modern Dark Theme
  * 
  * This page displays another user's profile information
- * and their posts.
+ * and their posts. Used for NFC-based profile opening.
+ * 
+ * Features:
+ * - View any user's profile via ?id= parameter
+ * - NFC-compatible: NFC tags redirect here
+ * - Display user stats and posts
+ * - Follow functionality
  */
 
 // Start session and check authentication
 session_start();
 require_once 'config/database.php';
-require_login();
 
 // Set page title
 $page_title = 'User Profile';
@@ -20,11 +25,22 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
     exit();
 }
 
-$profile_user_id = intval($_GET['id']);
-$current_user_id = $_SESSION['user_id'];
+// Validate and sanitize user ID
+$profile_user_id = filter_var($_GET['id'], FILTER_VALIDATE_INT, [
+    'options' => ['min_range' => 1]
+]);
 
-// Redirect to own profile if viewing self
-if ($profile_user_id == $current_user_id) {
+if ($profile_user_id === false) {
+    header("Location: home.php");
+    exit();
+}
+
+// Check if user is logged in
+$is_logged_in = is_logged_in();
+$current_user_id = $is_logged_in ? $_SESSION['user_id'] : null;
+
+// Redirect to own profile if viewing self and logged in
+if ($is_logged_in && $profile_user_id == $current_user_id) {
     header("Location: profile.php");
     exit();
 }
@@ -36,23 +52,75 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header("Location: home.php");
+    // User not found - show error page
+    $page_title = 'User Not Found';
+    if ($is_logged_in) {
+        include 'includes/header.php';
+    }
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <?php if (!$is_logged_in): ?>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Not Found - SocialNet</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="/social/assets/css/dark.css">
+        <?php endif; ?>
+    </head>
+    <body>
+        <div class="container">
+            <div class="nfc-section">
+                <div class="nfc-icon" style="background: var(--gradient-danger);">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h3 style="color: var(--danger-color);">User Not Found</h3>
+                <p>The user you're looking for doesn't exist or has been removed.</p>
+                <a href="<?php echo $is_logged_in ? 'home.php' : 'index.php'; ?>" class="btn btn-primary" style="margin-top: 20px; display: inline-flex; width: auto;">
+                    <i class="fas fa-home"></i>
+                    <span>Go Home</span>
+                </a>
+            </div>
+        </div>
+        <?php if ($is_logged_in): include 'includes/footer.php'; endif; ?>
+    </body>
+    </html>
+    <?php
     exit();
 }
 
 $profile_user = $result->fetch_assoc();
 $stmt->close();
 
-// Fetch user's posts
-$stmt = $conn->prepare("SELECT p.*, u.username, u.profile_image,
-                        (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
-                        (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = ?) as user_liked,
-                        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
-                        FROM posts p 
-                        JOIN users u ON p.user_id = u.id
-                        WHERE p.user_id = ? 
-                        ORDER BY p.created_at DESC");
-$stmt->bind_param("ii", $current_user_id, $profile_user_id);
+// Update page title with username
+$page_title = htmlspecialchars($profile_user['username']) . "'s Profile";
+
+// Fetch user's posts (allow viewing even if not logged in)
+if ($is_logged_in) {
+    $stmt = $conn->prepare("SELECT p.*, u.username, u.profile_image, u.is_verified,
+                            (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
+                            (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND user_id = ?) as user_liked,
+                            (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
+                            FROM posts p 
+                            JOIN users u ON p.user_id = u.id
+                            WHERE p.user_id = ? AND p.is_deleted = 0 
+                            ORDER BY p.created_at DESC");
+    $stmt->bind_param("ii", $current_user_id, $profile_user_id);
+} else {
+    $stmt = $conn->prepare("SELECT p.*, u.username, u.profile_image, u.is_verified,
+                            (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as like_count,
+                            0 as user_liked,
+                            (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count
+                            FROM posts p 
+                            JOIN users u ON p.user_id = u.id
+                            WHERE p.user_id = ? AND p.is_deleted = 0 
+                            ORDER BY p.created_at DESC");
+    $stmt->bind_param("i", $profile_user_id);
+}
 $stmt->execute();
 $posts_result = $stmt->get_result();
 
@@ -125,7 +193,12 @@ include 'includes/header.php';
         </div>
         
         <div class="profile-info">
-            <h1><?php echo htmlspecialchars($profile_user['username']); ?></h1>
+            <h1>
+                <?php echo htmlspecialchars($profile_user['username']); ?>
+                <?php if ($profile_user['is_verified']): ?>
+                    <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                <?php endif; ?>
+            </h1>
             <p class="username">@<?php echo htmlspecialchars($profile_user['username']); ?></p>
             <p class="bio">
                 <?php echo !empty($profile_user['bio']) ? nl2br(htmlspecialchars($profile_user['bio'])) : 'No bio yet.'; ?>
@@ -146,6 +219,17 @@ include 'includes/header.php';
                     <span class="stat-label">Comments Received</span>
                 </div>
             </div>
+            
+            <!-- Action Buttons -->
+            <?php if ($is_logged_in && $profile_user_id != $current_user_id): ?>
+            <div style="margin-top: 20px; display: flex; gap: 12px;">
+                <a href="messages.php?user=<?php echo $profile_user_id; ?>" 
+                   class="btn" 
+                   style="background: var(--gradient-primary); color: #000; padding: 10px 24px; text-decoration: none; border-radius: var(--radius); display: inline-flex; align-items: center; gap: 8px; font-weight: 600;">
+                    <i class="fas fa-envelope"></i> Send Message
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -168,7 +252,12 @@ include 'includes/header.php';
                          class="post-avatar"
                          onerror="this.src='assets/uploads/profiles/default-avatar.png'">
                     <div class="post-user-info">
-                        <h4><?php echo htmlspecialchars($post['username']); ?></h4>
+                        <h4>
+                            <?php echo htmlspecialchars($post['username']); ?>
+                            <?php if ($post['is_verified']): ?>
+                                <span class="verified-badge" title="Verified User"><i class="fas fa-check"></i></span>
+                            <?php endif; ?>
+                        </h4>
                         <span class="username">@<?php echo htmlspecialchars($post['username']); ?></span>
                     </div>
                     <span class="post-time">
@@ -181,11 +270,21 @@ include 'includes/header.php';
                     <?php echo nl2br(htmlspecialchars($post['content'])); ?>
                 </div>
                 
-                <!-- Post Image -->
-                <?php if (!empty($post['image'])): ?>
+                <!-- Post Media (Image or Video) -->
+                <?php if (!empty($post['image']) && $post['media_type'] == 'image'): ?>
                     <div class="post-image" onclick="openLightbox('assets/uploads/posts/<?php echo htmlspecialchars($post['image']); ?>')" style="cursor: pointer;">
                         <img src="assets/uploads/posts/<?php echo htmlspecialchars($post['image']); ?>" 
                              alt="Post image">
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (!empty($post['video']) && $post['media_type'] == 'video'): ?>
+                    <div class="post-video">
+                        <video controls preload="metadata" style="max-width: 100%; border-radius: 8px; background: #000;">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/mp4">
+                            <source src="assets/uploads/posts/<?php echo htmlspecialchars($post['video']); ?>" type="video/webm">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                 <?php endif; ?>
                 

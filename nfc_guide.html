@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Testing Guide - SocialNet</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Dark Theme CSS -->
+    <link rel="stylesheet" href="/social/assets/css/dark.css">
+    
+    <style>
+        .guide-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .guide-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .guide-header h1 {
+            font-size: 42px;
+            background: var(--gradient-primary);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        
+        .guide-header p {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+        
+        .guide-section {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-bottom: 28px;
+        }
+        
+        .guide-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        
+        .guide-section h2 i {
+            color: var(--accent-teal);
+            font-size: 28px;
+        }
+        
+        .guide-section h3 {
+            font-size: 18px;
+            margin: 24px 0 12px;
+            color: var(--accent-violet);
+        }
+        
+        .guide-section p, .guide-section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        
+        .guide-section ol, .guide-section ul {
+            padding-left: 24px;
+            margin: 16px 0;
+        }
+        
+        .guide-section li {
+            margin-bottom: 12px;
+        }
+        
+        .code-block {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            color: var(--accent-teal);
+        }
+        
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 20px 0;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        
+        .warning-box i {
+            color: var(--warning-color);
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 20px 0;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        
+        .info-box i {
+            color: var(--info-color);
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .success-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin: 20px 0;
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--gradient-primary);
+            color: #000;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .browser-support-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .browser-support-table th,
+        .browser-support-table td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .browser-support-table th {
+            background: var(--bg-tertiary);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .browser-support-table td {
+            color: var(--text-secondary);
+        }
+        
+        .support-yes {
+            color: var(--success-color);
+            font-weight: 700;
+        }
+        
+        .support-no {
+            color: var(--danger-color);
+            font-weight: 700;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 32px;
+            transition: all var(--transition);
+        }
+        
+        .back-btn:hover {
+            background: var(--accent-teal);
+            color: #000;
+            border-color: var(--accent-teal);
+        }
+    </style>
+</head>
+<body>
+    <div class="guide-container">
+        <!-- Back Button -->
+        <a href="nfc_scan.php" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Scanner
+        </a>
+        
+        <!-- Header -->
+        <div class="guide-header">
+            <h1><i class="fas fa-wifi"></i> NFC Testing Guide</h1>
+            <p>Complete guide for testing NFC-based profile opening on SocialNet</p>
+        </div>
+        
+        <!-- Section 1: Requirements -->
+        <div class="guide-section">
+            <h2><i class="fas fa-clipboard-check"></i> Requirements</h2>
+            
+            <p>Before testing NFC functionality, ensure you have:</p>
+            
+            <ul>
+                <li><strong>Android Device:</strong> NFC-enabled Android smartphone or tablet</li>
+                <li><strong>Chrome Browser:</strong> Version 89 or later (Web NFC only works in Chrome on Android)</li>
+                <li><strong>HTTPS Connection:</strong> Web NFC requires a secure context (HTTPS or localhost)</li>
+                <li><strong>NFC Tags:</strong> NTAG213, NTAG215, NTAG216, or similar writable NFC tags</li>
+                <li><strong>NFC Tools App:</strong> For writing data to NFC tags (free on Play Store)</li>
+            </ul>
+            
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>Important:</strong> Web NFC is NOT supported on iOS (iPhone/iPad) or any browser other than Chrome on Android. Safari, Firefox, and Edge do not support Web NFC.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 2: Browser Support -->
+        <div class="guide-section">
+            <h2><i class="fas fa-globe"></i> Browser Support</h2>
+            
+            <table class="browser-support-table">
+                <thead>
+                    <tr>
+                        <th>Browser</th>
+                        <th>Platform</th>
+                        <th>Support</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="fab fa-chrome"></i> Chrome 89+</td>
+                        <td>Android</td>
+                        <td class="support-yes">✓ Supported</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fab fa-chrome"></i> Chrome</td>
+                        <td>Windows/Mac/Linux</td>
+                        <td class="support-no">✗ Not Supported</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fab fa-safari"></i> Safari</td>
+                        <td>iOS / macOS</td>
+                        <td class="support-no">✗ Not Supported</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fab fa-firefox"></i> Firefox</td>
+                        <td>All</td>
+                        <td class="support-no">✗ Not Supported</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fab fa-edge"></i> Edge</td>
+                        <td>All</td>
+                        <td class="support-no">✗ Not Supported</td>
+                    </tr>
+                    <tr>
+                        <td><i class="fab fa-opera"></i> Opera</td>
+                        <td>Android</td>
+                        <td class="support-no">✗ Not Supported</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Section 3: Writing NFC Tags -->
+        <div class="guide-section">
+            <h2><i class="fas fa-pen-to-square"></i> Writing User ID to NFC Tag</h2>
+            
+            <p>Follow these steps to write a user ID to an NFC tag using the NFC Tools app:</p>
+            
+            <h3><span class="step-number">1</span> Install NFC Tools</h3>
+            <p>Download "NFC Tools" from Google Play Store (free version is sufficient).</p>
+            
+            <h3><span class="step-number">2</span> Open the App</h3>
+            <p>Launch NFC Tools and tap on the <strong>"Write"</strong> tab at the bottom.</p>
+            
+            <h3><span class="step-number">3</span> Add a Text Record</h3>
+            <ol>
+                <li>Tap <strong>"Add a record"</strong></li>
+                <li>Select <strong>"Text"</strong> from the list</li>
+                <li>In the text field, enter <strong>ONLY the user ID number</strong> (e.g., <code>1</code>, <code>42</code>, <code>123</code>)</li>
+                <li>Tap <strong>"OK"</strong> to save</li>
+            </ol>
+            
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Finding User ID:</strong> The user ID is the number in the profile URL. For example, if the profile URL is <code>user_profile.php?id=5</code>, the user ID is <strong>5</strong>.
+                </div>
+            </div>
+            
+            <h3><span class="step-number">4</span> Write to Tag</h3>
+            <ol>
+                <li>Tap <strong>"Write"</strong> button</li>
+                <li>Hold your phone over the NFC tag</li>
+                <li>Wait for the "Write complete" confirmation</li>
+            </ol>
+            
+            <div class="success-box">
+                <strong>✓ Success!</strong> Your NFC tag now contains the user ID and is ready for scanning.
+            </div>
+        </div>
+        
+        <!-- Section 4: Testing the Scanner -->
+        <div class="guide-section">
+            <h2><i class="fas fa-vial"></i> Testing NFC Scanning</h2>
+            
+            <h3><span class="step-number">1</span> Access the Scanner</h3>
+            <p>Open Chrome on your Android device and navigate to:</p>
+            <div class="code-block">https://your-domain.com/social/nfc_scan.php</div>
+            
+            <h3><span class="step-number">2</span> Grant Permissions</h3>
+            <p>When prompted, allow NFC access for the website.</p>
+            
+            <h3><span class="step-number">3</span> Start Scanning</h3>
+            <p>Tap the <strong>"Start Scanning"</strong> button.</p>
+            
+            <h3><span class="step-number">4</span> Scan the Tag</h3>
+            <p>Hold your phone near the NFC tag. The NFC antenna is usually at the back-center of the phone.</p>
+            
+            <h3><span class="step-number">5</span> View Profile</h3>
+            <p>Upon successful scan, you'll see a preview of the user and be automatically redirected to their profile.</p>
+        </div>
+        
+        <!-- Section 5: Testing with Localhost -->
+        <div class="guide-section">
+            <h2><i class="fas fa-laptop-code"></i> Testing on Localhost (XAMPP)</h2>
+            
+            <p>To test NFC on localhost, you need to access your XAMPP server from your Android device:</p>
+            
+            <h3><span class="step-number">1</span> Find Your Computer's IP</h3>
+            <p>Open Command Prompt and run:</p>
+            <div class="code-block">ipconfig</div>
+            <p>Look for "IPv4 Address" (e.g., 192.168.1.100)</p>
+            
+            <h3><span class="step-number">2</span> Configure XAMPP</h3>
+            <p>Ensure Apache is running and accessible on your network. You may need to allow it through Windows Firewall.</p>
+            
+            <h3><span class="step-number">3</span> Access from Android</h3>
+            <p>On your Android Chrome browser, navigate to:</p>
+            <div class="code-block">http://192.168.1.100/social/nfc_scan.php</div>
+            <p>(Replace with your actual IP address)</p>
+            
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong>HTTP Limitation:</strong> Web NFC requires HTTPS in production. For local testing with HTTP, Chrome may still work if accessing via the device's local network, but this isn't guaranteed.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 6: Troubleshooting -->
+        <div class="guide-section">
+            <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+            
+            <h3>❌ "NFC Not Supported" Error</h3>
+            <ul>
+                <li>Ensure you're using Chrome on Android (not Samsung Internet, Firefox, etc.)</li>
+                <li>Check if your device has NFC hardware</li>
+                <li>Verify Chrome is updated to version 89 or later</li>
+            </ul>
+            
+            <h3>❌ "Permission Denied" Error</h3>
+            <ul>
+                <li>Go to Chrome Settings → Site Settings → NFC</li>
+                <li>Allow NFC for the website</li>
+                <li>Clear site data and try again</li>
+            </ul>
+            
+            <h3>❌ "NFC is Disabled" Error</h3>
+            <ul>
+                <li>Enable NFC in your device settings (Settings → Connections → NFC)</li>
+                <li>Restart your device if NFC was just enabled</li>
+            </ul>
+            
+            <h3>❌ Tag Not Reading</h3>
+            <ul>
+                <li>Move the tag closer to the NFC antenna (usually center-back of phone)</li>
+                <li>Hold the tag steady for 1-2 seconds</li>
+                <li>Remove phone case if it's thick</li>
+                <li>Ensure the tag isn't damaged</li>
+            </ul>
+            
+            <h3>❌ "No Valid User ID Found"</h3>
+            <ul>
+                <li>Verify the tag contains only a number (the user ID)</li>
+                <li>Re-write the tag using NFC Tools</li>
+                <li>Try using a different NFC tag</li>
+            </ul>
+            
+            <h3>❌ "User Not Found"</h3>
+            <ul>
+                <li>Confirm the user ID exists in your database</li>
+                <li>Check the API endpoint is accessible: <code>/social/api/nfc.php?id=1</code></li>
+            </ul>
+        </div>
+        
+        <!-- Section 7: NFC Tag Types -->
+        <div class="guide-section">
+            <h2><i class="fas fa-tag"></i> Recommended NFC Tags</h2>
+            
+            <p>For storing user IDs, any standard NFC tag works. Recommended types:</p>
+            
+            <table class="browser-support-table">
+                <thead>
+                    <tr>
+                        <th>Tag Type</th>
+                        <th>Memory</th>
+                        <th>Use Case</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>NTAG213</td>
+                        <td>144 bytes</td>
+                        <td>Perfect for user IDs (plenty of space)</td>
+                    </tr>
+                    <tr>
+                        <td>NTAG215</td>
+                        <td>504 bytes</td>
+                        <td>Good for IDs with additional data</td>
+                    </tr>
+                    <tr>
+                        <td>NTAG216</td>
+                        <td>888 bytes</td>
+                        <td>For storing URLs or larger data</td>
+                    </tr>
+                    <tr>
+                        <td>Mifare Classic 1K</td>
+                        <td>1024 bytes</td>
+                        <td>Widely available, good compatibility</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p><strong>Where to buy:</strong> Amazon, AliExpress, or local electronics stores. NFC stickers and cards are both suitable.</p>
+        </div>
+        
+        <!-- Section 8: API Reference -->
+        <div class="guide-section">
+            <h2><i class="fas fa-code"></i> API Reference</h2>
+            
+            <h3>Endpoint</h3>
+            <div class="code-block">GET /social/api/nfc.php?id={user_id}</div>
+            
+            <h3>Success Response (200)</h3>
+            <div class="code-block">{
+  "success": true,
+  "message": "User found",
+  "data": {
+    "id": 1,
+    "username": "johndoe",
+    "bio": "Hello world!",
+    "profile_image": "assets/uploads/profiles/profile_1.jpg",
+    "profile_url": "user_profile.php?id=1",
+    "member_since": "December 2024",
+    "stats": {
+      "posts": 15,
+      "likes": 42,
+      "followers": 100,
+      "following": 50
+    }
+  }
+}</div>
+            
+            <h3>Error Response (404)</h3>
+            <div class="code-block">{
+  "success": false,
+  "message": "User not found",
+  "data": null
+}</div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+            <p>Need help? Contact the administrator or open an issue on GitHub.</p>
+            <p style="margin-top: 10px;">
+                <a href="nfc_scan.php" class="btn btn-primary" style="display: inline-flex; width: auto;">
+                    <i class="fas fa-wifi"></i> Open NFC Scanner
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

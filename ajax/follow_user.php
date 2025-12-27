@@ -5,6 +5,7 @@
 
 session_start();
 require_once '../config/database.php';
+require_once '../config/notifications.php';
 
 header('Content-Type: application/json');
 
@@ -42,6 +43,9 @@ if ($result->num_rows > 0) {
     $insert_stmt = $conn->prepare($insert_query);
     $insert_stmt->bind_param("ii", $follower_id, $following_id);
     $insert_stmt->execute();
+    
+    // Create notification for the user being followed
+    create_notification($following_id, $follower_id, 'follow', null, 'started following you');
     
     echo json_encode(['success' => true, 'following' => true, 'message' => 'Following successfully']);
 }

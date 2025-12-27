@@ -837,7 +837,7 @@ function toggleNotifications() {
  * Mark all notifications as read
  */
 function markNotificationsAsRead() {
-    fetch('ajax/mark_notifications_read.php', {
+    fetch('ajax/get_notifications.php?action=mark_all_read', {
         method: 'POST'
     })
     .then(response => response.json())
@@ -854,7 +854,7 @@ function markNotificationsAsRead() {
  * Load notifications
  */
 function loadNotifications() {
-    fetch('ajax/get_notifications.php')
+    fetch('ajax/get_notifications.php?action=fetch')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -874,23 +874,105 @@ function displayNotifications(notifications) {
     if (!container) return;
     
     if (notifications.length === 0) {
-        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No notifications</div>';
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No notifications yet</div>';
         return;
     }
     
     let html = '';
     notifications.forEach(notif => {
+        // Safely get values with fallbacks
+        const username = notif.from_username || 'Unknown User';
+        const profileImage = notif.from_profile_image || 'default-avatar.png';
+        const type = notif.type || 'like';
+        const isRead = notif.is_read || 0;
+        const createdAt = notif.created_at || new Date().toISOString();
+        const postId = notif.post_id;
+        const fromUserId = notif.from_user_id;
+        
+        const icon = getNotificationIcon(type);
+        const message = getNotificationMessageFromData(username, type);
+        const timeAgo = getTimeAgo(createdAt);
+        const link = postId ? `home.php#post-${postId}` : `user_profile.php?id=${fromUserId}`;
+        const unreadClass = isRead == 0 ? 'unread' : '';
+        
         html += `
-            <div class="notification-item ${notif.is_read ? '' : 'unread'}" onclick="window.location.href='${notif.link}'">
-                <img src="assets/uploads/profiles/${notif.profile_image}" class="notification-avatar">
+            <div class="notification-item ${unreadClass}" onclick="window.location.href='${link}'">
+                <img src="assets/uploads/profiles/${profileImage}" 
+                     class="notification-avatar"
+                     onerror="this.src='assets/uploads/profiles/default-avatar.png'">
                 <div class="notification-content">
-                    <div class="notification-text">${notif.message}</div>
-                    <div class="notification-time">${notif.time_ago}</div>
+                    <div class="notification-text">
+                        ${icon} ${message}
+                    </div>
+                    <div class="notification-time">${timeAgo}</div>
                 </div>
             </div>
         `;
     });
+    
+    html += `
+        <div style="padding: 12px; text-align: center; border-top: 1px solid var(--border-color);">
+            <button onclick="markNotificationsAsRead(); event.stopPropagation();" 
+                    class="btn btn-sm" 
+                    style="background: var(--bg-tertiary); padding: 6px 16px;">
+                <i class="fas fa-check-double"></i> Mark All Read
+            </button>
+        </div>
+    `;
+    
     container.innerHTML = html;
+}
+
+/**
+ * Get notification icon HTML
+ */
+function getNotificationIcon(type) {
+    const icons = {
+        'like': '<i class="fas fa-heart" style="color: #f43f5e;"></i>',
+        'comment': '<i class="fas fa-comment" style="color: #3b82f6;"></i>',
+        'follow': '<i class="fas fa-user-plus" style="color: #10b981;"></i>',
+        'mention': '<i class="fas fa-at" style="color: #8b5cf6;"></i>'
+    };
+    return icons[type] || '<i class="fas fa-bell"></i>';
+}
+
+/**
+ * Get notification message from data
+ */
+function getNotificationMessageFromData(username, type) {
+    const user = `<strong>${username}</strong>`;
+    
+    switch (type) {
+        case 'like':
+            return `${user} liked your post`;
+        case 'comment':
+            return `${user} commented on your post`;
+        case 'follow':
+            return `${user} started following you`;
+        case 'mention':
+            return `${user} mentioned you in a post`;
+        default:
+            return `${user} interacted with your content`;
+    }
+}
+
+/**
+ * Get time ago string
+ */
+function getTimeAgo(timestamp) {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const seconds = Math.floor((now - past) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    
+    return past.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 /**
@@ -975,3 +1057,102 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// =====================================================
+// VIDEO & IMAGE UPLOAD HANDLING
+// =====================================================
+
+/**
+ * Handle media upload (image or video)
+ * Ensures only one media type is selected at a time
+ * @param {HTMLInputElement} input - File input element
+ * @param {string} type - 'image' or 'video'
+ */
+function handleMediaUpload(input, type) {
+    const imageInput = document.getElementById('postImage');
+    const videoInput = document.getElementById('postVideo');
+    const imagePreview = document.getElementById('imagePreview');
+    const videoPreview = document.getElementById('videoPreview');
+    
+    if (type === 'image' && input.files && input.files[0]) {
+        // Clear video if image is selected
+        if (videoInput) videoInput.value = '';
+        if (videoPreview) {
+            videoPreview.style.display = 'none';
+            videoPreview.innerHTML = '';
+        }
+        
+        // Show image preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (imagePreview) {
+                imagePreview.style.display = 'block';
+                imagePreview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" style="max-width: 100%; border-radius: 8px;">
+                    <button type="button" onclick="clearMediaPreview('image')" 
+                            style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); 
+                            color: white; border: none; border-radius: 50%; width: 30px; height: 30px; 
+                            cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+        
+    } else if (type === 'video' && input.files && input.files[0]) {
+        // Clear image if video is selected
+        if (imageInput) imageInput.value = '';
+        if (imagePreview) {
+            imagePreview.style.display = 'none';
+            imagePreview.innerHTML = '';
+        }
+        
+        // Show video preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (videoPreview) {
+                videoPreview.style.display = 'block';
+                videoPreview.innerHTML = `
+                    <div style="position: relative;">
+                        <video controls style="max-width: 100%; border-radius: 8px; background: #000;">
+                            <source src="${e.target.result}" type="${input.files[0].type}">
+                            Your browser does not support the video tag.
+                        </video>
+                        <button type="button" onclick="clearMediaPreview('video')" 
+                                style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); 
+                                color: white; border: none; border-radius: 50%; width: 30px; height: 30px; 
+                                cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+/**
+ * Clear media preview
+ * @param {string} type - 'image' or 'video'
+ */
+function clearMediaPreview(type) {
+    if (type === 'image') {
+        const imageInput = document.getElementById('postImage');
+        const imagePreview = document.getElementById('imagePreview');
+        if (imageInput) imageInput.value = '';
+        if (imagePreview) {
+            imagePreview.style.display = 'none';
+            imagePreview.innerHTML = '';
+        }
+    } else if (type === 'video') {
+        const videoInput = document.getElementById('postVideo');
+        const videoPreview = document.getElementById('videoPreview');
+        if (videoInput) videoInput.value = '';
+        if (videoPreview) {
+            videoPreview.style.display = 'none';
+            videoPreview.innerHTML = '';
+        }
+    }
+}

@@ -1,14 +1,13 @@
 <?php
 /**
- * Sign Up Page - Modern Dark Theme
+ * Login Page - Modern Dark Theme
  * 
  * Features:
  * - Modern dark neon UI with floating labels
  * - Password show/hide toggle
- * - Strong password validation
- * - Secure password hashing
- * - Input sanitization
- * - Duplicate email/username check
+ * - Secure authentication
+ * - NFC login button (future ready)
+ * - Fully responsive
  */
 
 // Start session
@@ -27,60 +26,46 @@ if (is_logged_in()) {
 $error = '';
 $success = '';
 
-// Process signup form submission
+// Process login form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Get and sanitize form data
-    $username = sanitize_input($_POST['username'] ?? '');
     $email = sanitize_input($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
     
     // Validate input
-    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
+    if (empty($email) || empty($password)) {
         $error = "Please fill in all fields";
-    } elseif (strlen($username) < 3 || strlen($username) > 30) {
-        $error = "Username must be between 3 and 30 characters";
-    } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-        $error = "Username can only contain letters, numbers, and underscores";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Invalid email format";
-    } elseif (strlen($password) < 6) {
-        $error = "Password must be at least 6 characters long";
-    } elseif ($password !== $confirm_password) {
-        $error = "Passwords do not match";
+        $error = "Please enter a valid email address";
     } else {
-        // Check if username or email already exists
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? OR username = ?");
-        $stmt->bind_param("ss", $email, $username);
+        // Prepare SQL statement to prevent SQL injection
+        $stmt = $conn->prepare("SELECT id, username, email, password FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
         
-        if ($result->num_rows > 0) {
-            $error = "Email or username already exists";
-        } else {
-            // Hash password with strong algorithm
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        if ($result->num_rows == 1) {
+            // User found, verify password
+            $user = $result->fetch_assoc();
             
-            // Insert new user into database
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, NOW())");
-            $stmt->bind_param("sss", $username, $email, $hashed_password);
-            
-            if ($stmt->execute()) {
-                // Regenerate session ID for security
+            if (password_verify($password, $user['password'])) {
+                // Password correct, regenerate session ID for security
                 session_regenerate_id(true);
                 
-                // Auto-login after signup
-                $_SESSION['user_id'] = $stmt->insert_id;
-                $_SESSION['username'] = $username;
-                $_SESSION['email'] = $email;
+                // Create session
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['email'] = $user['email'];
                 $_SESSION['last_activity'] = time();
                 
                 // Redirect to home page
                 header("Location: home.php");
                 exit();
             } else {
-                $error = "Error creating account. Please try again.";
+                $error = "Invalid email or password";
             }
+        } else {
+            $error = "Invalid email or password";
         }
         
         $stmt->close();
@@ -92,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Create your SocialNet account - Join our community today">
-    <title>Sign Up - SocialNet</title>
+    <meta name="description" content="Login to SocialNet - Connect with friends and share your moments">
+    <title>Login - SocialNet</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,8 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <span>SocialNet</span>
             </div>
             
-            <h2>Create Account</h2>
-            <p>Join our community today</p>
+            <h2 style="background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent;">Welcome Back</h2>
+            <p style="color: var(--text-secondary);">Sign in to continue to your account</p>
             
             <!-- Error Message -->
             <?php if (!empty($error)): ?>
@@ -134,28 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             <?php endif; ?>
             
-            <!-- Signup Form -->
-            <form method="POST" action="" id="signupForm" novalidate>
-                <!-- Username Field -->
-                <div class="form-group floating-label">
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder=" " 
-                        required
-                        autocomplete="username"
-                        minlength="3"
-                        maxlength="30"
-                        pattern="[a-zA-Z0-9_]+"
-                        value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>"
-                    >
-                    <label for="username">
-                        <i class="fas fa-user"></i> Username
-                    </label>
-                </div>
-                
-                <!-- Email Field -->
+            <!-- Login Form -->
+            <form method="POST" action="" id="loginForm" novalidate>
+                <!-- Email Field with Floating Label -->
                 <div class="form-group floating-label">
                     <input 
                         type="email" 
@@ -180,48 +146,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             name="password" 
                             placeholder=" " 
                             required
-                            autocomplete="new-password"
-                            minlength="6"
+                            autocomplete="current-password"
                         >
                         <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Toggle password visibility">
                             <i class="fas fa-eye" id="password-toggle-icon"></i>
                         </button>
                     </div>
                     <label for="password">
-                        <i class="fas fa-lock"></i> Password (min 6 chars)
+                        <i class="fas fa-lock"></i> Password
                     </label>
                 </div>
                 
-                <!-- Confirm Password Field -->
-                <div class="form-group floating-label">
-                    <div class="password-wrapper">
-                        <input 
-                            type="password" 
-                            id="confirm_password" 
-                            name="confirm_password" 
-                            placeholder=" " 
-                            required
-                            autocomplete="new-password"
-                        >
-                        <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')" aria-label="Toggle password visibility">
-                            <i class="fas fa-eye" id="confirm_password-toggle-icon"></i>
-                        </button>
-                    </div>
-                    <label for="confirm_password">
-                        <i class="fas fa-lock"></i> Confirm Password
-                    </label>
-                </div>
-                
-                <!-- Signup Button -->
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Create Account</span>
+                <!-- Login Button -->
+                <button type="submit" class="btn btn-primary" style="background: var(--gradient-primary); color: #000; box-shadow: var(--shadow-glow);">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In</span>
                 </button>
             </form>
             
+            <!-- Divider -->
+            <div class="divider">
+                <span>or</span>
+            </div>
+            
+            <!-- NFC Login Button (Future Ready) -->
+            
+            
             <!-- Footer Link -->
             <div class="auth-footer">
-                Already have an account? <a href="index.php">Sign in</a>
+                Don't have an account? <a href="signup.php">Create one now</a>
             </div>
         </div>
     </div>
@@ -245,29 +198,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         // Form validation
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            const username = document.getElementById('username').value.trim();
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
             
             // Basic validation
-            if (!username || !email || !password || !confirmPassword) {
+            if (!email || !password) {
                 e.preventDefault();
                 showError('Please fill in all fields');
-                return;
-            }
-            
-            // Username validation
-            if (username.length < 3 || username.length > 30) {
-                e.preventDefault();
-                showError('Username must be between 3 and 30 characters');
-                return;
-            }
-            
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                e.preventDefault();
-                showError('Username can only contain letters, numbers, and underscores');
                 return;
             }
             
@@ -276,20 +214,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (!emailRegex.test(email)) {
                 e.preventDefault();
                 showError('Please enter a valid email address');
-                return;
-            }
-            
-            // Password validation
-            if (password.length < 6) {
-                e.preventDefault();
-                showError('Password must be at least 6 characters long');
-                return;
-            }
-            
-            // Confirm password
-            if (password !== confirmPassword) {
-                e.preventDefault();
-                showError('Passwords do not match');
                 return;
             }
         });
@@ -305,8 +229,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             alert.innerHTML = `<i class="fas fa-exclamation-circle"></i><span>${message}</span>`;
             
             // Insert after the paragraph
-            const form = document.getElementById('signupForm');
+            const form = document.getElementById('loginForm');
             form.parentNode.insertBefore(alert, form);
+        }
+        
+        // NFC Login (Placeholder for future implementation)
+        async function startNFCLogin() {
+            if ('NDEFReader' in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    
+                    // Show scanning status
+                    const btn = document.getElementById('nfcLoginBtn');
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Scanning...</span>';
+                    
+                    ndef.addEventListener('reading', ({ message, serialNumber }) => {
+                        for (const record of message.records) {
+                            if (record.recordType === "text") {
+                                const decoder = new TextDecoder();
+                                const userId = decoder.decode(record.data);
+                                
+                                // Redirect to NFC authentication
+                                window.location.href = `nfc_login.php?id=${encodeURIComponent(userId)}`;
+                            }
+                        }
+                    });
+                } catch (error) {
+                    alert('NFC Error: ' + error.message);
+                }
+            } else {
+                alert('Web NFC is not supported on this device/browser.\nPlease use Chrome on an Android device.');
+            }
         }
         
         // Add input animations

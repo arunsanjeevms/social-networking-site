@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_post'])) {
         $error = "Post content cannot be empty";
     } else {
         $image_filename = null;
+        $video_filename = null;
+        $media_type = 'none';
         
         // Handle image upload if provided
         if (isset($_FILES['post_image']) && $_FILES['post_image']['error'] == 0) {
@@ -58,16 +60,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_post'])) {
                 if (!move_uploaded_file($_FILES['post_image']['tmp_name'], $upload_path)) {
                     $error = "Error uploading image";
                     $image_filename = null;
+                } else {
+                    $media_type = 'image';
                 }
             } else {
                 $error = "Invalid file type or file too large (max 10MB)";
             }
         }
         
+        // Handle video upload if provided
+        if (isset($_FILES['post_video']) && $_FILES['post_video']['error'] == 0 && empty($error)) {
+            $allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
+            $file_type = $_FILES['post_video']['type'];
+            $file_size = $_FILES['post_video']['size'];
+            
+            // Validate file type and size (max 50MB for videos)
+            if (in_array($file_type, $allowed_video_types) && $file_size <= 50000000) {
+                // Create uploads directory if it doesn't exist
+                $upload_dir = 'assets/uploads/posts/';
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
+                }
+                
+                // Generate unique filename
+                $file_extension = pathinfo($_FILES['post_video']['name'], PATHINFO_EXTENSION);
+                $video_filename = 'post_' . $user_id . '_' . time() . '.' . $file_extension;
+                $upload_path = $upload_dir . $video_filename;
+                
+                // Move uploaded file
+                if (!move_uploaded_file($_FILES['post_video']['tmp_name'], $upload_path)) {
+                    $error = "Error uploading video";
+                    $video_filename = null;
+                } else {
+                    $media_type = 'video';
+                    // If both image and video uploaded, prefer video
+                    $image_filename = null;
+                }
+            } else {
+                $error = "Invalid video file type or file too large (max 50MB)";
+            }
+        }
+        
         // Insert post into database if no errors
         if (empty($error)) {
-            $stmt = $conn->prepare("INSERT INTO posts (user_id, content, image) VALUES (?, ?, ?)");
-            $stmt->bind_param("iss", $user_id, $content, $image_filename);
+            $stmt = $conn->prepare("INSERT INTO posts (user_id, content, image, video, media_type) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("issss", $user_id, $content, $image_filename, $video_filename, $media_type);
             
             if ($stmt->execute()) {
                 $success = "Post created successfully!";
@@ -137,7 +174,8 @@ include 'includes/header.php';
                     <input type="file" 
                            id="postImage" 
                            name="post_image" 
-                           accept="image/*">
+                           accept="image/*"
+                           onchange="handleMediaUpload(this, 'image')">
                     <label for="postImage" class="file-input-label">
                         <i class="fas fa-upload"></i> Choose Image
                     </label>
@@ -147,8 +185,28 @@ include 'includes/header.php';
                 </small>
             </div>
             
-            <!-- Image Preview -->
+            <div class="form-group">
+                <label for="postVideo">
+                    <i class="fas fa-video"></i> Add Video (Optional)
+                </label>
+                <div class="file-input-wrapper">
+                    <input type="file" 
+                           id="postVideo" 
+                           name="post_video" 
+                           accept="video/*"
+                           onchange="handleMediaUpload(this, 'video')">
+                    <label for="postVideo" class="file-input-label">
+                        <i class="fas fa-upload"></i> Choose Video
+                    </label>
+                </div>
+                <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                    Maximum file size: 50MB. Supported formats: MP4, WEBM, MOV
+                </small>
+            </div>
+            
+            <!-- Media Preview -->
             <div id="imagePreview" class="image-preview"></div>
+            <div id="videoPreview" class="video-preview" style="display: none; margin-top: 10px;"></div>
             
             <div style="display: flex; gap: 10px;">
                 <button type="submit" name="create_post" class="btn btn-primary" style="flex: 1;">

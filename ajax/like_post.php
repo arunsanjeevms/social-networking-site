@@ -14,6 +14,7 @@ session_start();
 
 // Include database connection
 require_once '../config/database.php';
+require_once '../config/notifications.php';
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -53,6 +54,19 @@ if ($result->num_rows > 0) {
     $stmt->bind_param("ii", $user_id, $post_id);
     $stmt->execute();
     $liked = true;
+    
+    // Get post owner to create notification
+    $stmt_post = $conn->prepare("SELECT user_id FROM posts WHERE id = ?");
+    $stmt_post->bind_param("i", $post_id);
+    $stmt_post->execute();
+    $post_result = $stmt_post->get_result();
+    
+    if ($post_result->num_rows > 0) {
+        $post_owner = $post_result->fetch_assoc()['user_id'];
+        // Create notification for post owner
+        create_notification($post_owner, $user_id, 'like', $post_id, 'liked your post');
+    }
+    $stmt_post->close();
 }
 
 // Get updated like count

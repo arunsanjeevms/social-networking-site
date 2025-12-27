@@ -14,6 +14,7 @@ session_start();
 
 // Include database connection
 require_once '../config/database.php';
+require_once '../config/notifications.php';
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -45,6 +46,19 @@ $stmt = $conn->prepare("INSERT INTO comments (user_id, post_id, comment) VALUES 
 $stmt->bind_param("iis", $user_id, $post_id, $comment);
 
 if ($stmt->execute()) {
+    // Get post owner to create notification
+    $stmt_post = $conn->prepare("SELECT user_id FROM posts WHERE id = ?");
+    $stmt_post->bind_param("i", $post_id);
+    $stmt_post->execute();
+    $post_result = $stmt_post->get_result();
+    
+    if ($post_result->num_rows > 0) {
+        $post_owner = $post_result->fetch_assoc()['user_id'];
+        // Create notification for post owner
+        create_notification($post_owner, $user_id, 'comment', $post_id, 'commented on your post');
+    }
+    $stmt_post->close();
+    
     // Get user information for response
     $stmt = $conn->prepare("SELECT username, profile_image FROM users WHERE id = ?");
     $stmt->bind_param("i", $user_id);
